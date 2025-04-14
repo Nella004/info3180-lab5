@@ -17,7 +17,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import { ref, onMounted } from "vue";
 
 let title = ref('');
