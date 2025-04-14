@@ -7,12 +7,40 @@ This file creates your application.
 
 from app import app
 from flask import render_template, request, jsonify, send_file
+from werkzeug.utils import secure_filename
 import os
-
+from .forms import MovieForm
+from .models import db, Movie
 
 ###
 # Routing for your application.
 ###
+UPLOAD_FOLDER = 'uploads/'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+@app.route('/api/v1/movies', methods=['POST'])
+def movies():
+    form = MovieForm()
+    if form.validate_on_submit():
+        title = form.title.data
+        description = form.description.data
+        poster = form.poster.data
+
+        filename = secure_filename(poster.filename)
+        poster.save(os.path.join(UPLOAD_FOLDER, filename))
+
+        new_movie = Movie(title=title, description=description, poster=filename)
+        db.session.add(new_movie)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Movie Successfully added",
+            "title": title,
+            "poster": filename,
+            "description": description
+        }), 201
+    
+    return jsonify({"errors": form.errors}), 400
 
 @app.route('/')
 def index():
