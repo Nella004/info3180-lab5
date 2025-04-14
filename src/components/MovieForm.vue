@@ -18,27 +18,49 @@
 
 <script setup>
 import { ref } from 'vue';
+import { ref, onMounted } from "vue";
 
 let title = ref('');
 let description = ref('');
 let poster = ref(null);
 
+onMounted(() => {
+  getCsrfToken();
+});
+
 function handleFileUpload(event) {
   poster.value = event.target.files[0];
 }
 
-function saveMovie() {
-  let formData = new FormData();
-  formData.append('title', title.value);
-  formData.append('description', description.value);
-  formData.append('poster', poster.value);
+let csrf_token = ref("");
 
-  fetch('/api/v1/movies', {
-    method: 'POST',
-    body: formData
-  })
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.log(error));
+function getCsrfToken() {
+  fetch('/api/v1/csrf-token')
+    .then((response) => response.json())
+    .then((data) => {
+      csrf_token.value = data.csrf_token;
+    });
 }
+
+function saveMovie() {
+  let movieForm = document.getElementById('movieForm');
+  let form_data = new FormData(movieForm);
+
+  fetch("/api/v1/movies", {
+    method: 'POST',
+    body: form_data,
+    headers: {
+      'X-CSRFToken': csrf_token.value
+    }
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data); // success message
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+}
+
+
 </script>
